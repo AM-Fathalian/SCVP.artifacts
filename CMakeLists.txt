@@ -2,17 +2,42 @@ cmake_minimum_required(VERSION 3.10)
 
 project(SCVP_Artifacts)
 
+# --- FIX 1: Set C++ Standard to 14 to match your library build ---
+# --- MUST BE 17 FOR SYSTEMC 3.0 ---
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# --- FIX 2: Allow old SystemC syntax (needed for 3.0) ---
+add_compile_definitions(SC_ALLOW_DEPRECATED_IEEE_API)
+
+
+# find_library(SYSTEMC_LIBRARY 
+#     NAMES systemc
+#     #PATHS /opt/systemc/lib-macosx64/ # Uncomment for macOS
+#     PATHS $ENV{SYSTEMC_HOME}/lib-$ENV{SYSTEMC_TARGET_ARCH}/
+# )
+
 find_library(SYSTEMC_LIBRARY 
     NAMES systemc
-    #PATHS /opt/systemc/lib-macosx64/ # Uncomment for macOS
-    PATHS $ENV{SYSTEMC_HOME}/lib-$ENV{SYSTEMC_TARGET_ARCH}/
+    PATHS 
+        $ENV{SYSTEMC_HOME}/lib
+        $ENV{SYSTEMC_HOME}/lib-$ENV{SYSTEMC_TARGET_ARCH}/
 )
+
+# IDK I just did it this way!!!
+message(STATUS "----------> CHECKING LIBRARY: ${SYSTEMC_LIBRARY}")
+
 
 find_library(SYSTEMC_AMS_LIBRARY 
     NAMES systemc-ams
     #PATHS /opt/systemc-ams/lib-macosx64/ # Uncomment for macOS
-    PATHS $ENV{SYSTEMC_AMS_HOME}/lib-$ENV{SYSTEMC_TARGET_ARCH}/
+    PATHS 
+        $ENV{SYSTEMC_AMS_HOME}/lib
+        $ENV{SYSTEMC_AMS_HOME}/lib-$ENV{SYSTEMC_TARGET_ARCH}/
+        # $ENV{SYSTEMC_AMS_HOME}/lib-linux64/
+        
 )
+
 
 set(SYSTEMC_INCLUDE $ENV{SYSTEMC_HOME}/include)
 set(SYSTEMC_AMS_INCLUDE $ENV{SYSTEMC_AMS_HOME}/include)
@@ -59,6 +84,8 @@ add_subdirectory(tlm_payload_extensions)
 add_subdirectory(tlm_protocol_checker)
 add_subdirectory(tlm_quantum_keeper)
 add_subdirectory(tlm_simple_sockets)
+
+# --- FIX 3: Commented out AMS lines until you are ready for them ---
 add_subdirectory(ams-eln)
 add_subdirectory(ams-eln2)
 add_subdirectory(ams-tdf)
