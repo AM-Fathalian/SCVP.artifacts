@@ -85,6 +85,13 @@ add_subdirectory(tlm_protocol_checker)
 add_subdirectory(tlm_quantum_keeper)
 add_subdirectory(tlm_simple_sockets)
 
+add_subdirectory(cpp_playground)
+
+add_subdirectory(exercise2)
+
+
+#add_subdirectory(SCVP.ExerciseXXX EXCLUDE_FROM_ALL)
+
 # --- FIX 3: Commented out AMS lines until you are ready for them ---
 add_subdirectory(ams-eln)
 add_subdirectory(ams-eln2)
