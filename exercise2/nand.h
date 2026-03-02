@@ -3,26 +3,26 @@
 
 #include <systemc.h>
 
-
+//  Instead of class nand : public sc_module, we can also write SC_MODULE(nand)
+//  and then write the constructor and methods of the module inside the body of the macro.
 SC_MODULE(nand){
-    // Port, methos and constructor declarations go here.
-    private:
-        sc_in<bool> A;
+    // Port, methods and constructor declarations go here.
+        sc_in<bool> A ;
         sc_in<bool> B;
         sc_out<bool> Z;
     
-    public:
-        SC_CTOR(nand) : A("A") , B("B") , Z("Z") {
+        SC_CTOR(nand) {
 
-            SC_METHOD(do_nand);
-            sensitive << A << B;    // This process is sensitive to changes in signals A and B. Therefore, it
-                                    // will be triggered every time there is a change in any of these
-                                    // two signals.
+            SC_METHOD(do_nand); // This is just to register the process(do_nand) with the kernel;
+                                //  so that the kernel can call this process when it is triggered by signals in sensitivity list.
+           
+             sensitive << A << B;    // This process is sensitive to changes in signals A and B. Therefore, it
+                                     // will be triggered every time there is a change in them.
 
 
         }
 
-        void do_nand(){
+        void do_nand(){                         // this is a process.
             Z.write(!(A.read() && B.read()));
         }
 
