@@ -6,6 +6,7 @@
 //  Instead of class nand : public sc_module, we can also write SC_MODULE(nand)
 //  and then write the constructor and methods of the module inside the body of the macro.
 SC_MODULE(nand){
+    public:
     // Port, methods and constructor declarations go here.
         sc_in<bool> A ;
         sc_in<bool> B;
@@ -19,10 +20,12 @@ SC_MODULE(nand){
              sensitive << A << B;    // This process is sensitive to changes in signals A and B. Therefore, it
                                      // will be triggered every time there is a change in them.
 
-
         }
 
+        private:
+        
         void do_nand(){                         // this is a process.
+
             Z.write(!(A.read() && B.read()));
         }
 

@@ -62,7 +62,8 @@ SC_MODULE(clockGenerator)
 };
 
 
-int sc_main ()
+int sc_main (int __attribute__((unused)) sc_argc,
+             char __attribute__((unused)) *sc_argv[])
 {
     clockGenerator g("clock_1GHz", sc_time(1,SC_NS));
     sc_signal<bool> clk;
