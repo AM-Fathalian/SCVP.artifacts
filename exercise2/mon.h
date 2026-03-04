@@ -8,6 +8,8 @@ SC_MODULE(Monitor)
 {
 public:
     sc_in<bool> A, B, Z;
+    sc_in<bool> Clk;
+
 
     SC_CTOR(Monitor)
     {
