@@ -88,6 +88,8 @@ add_subdirectory(tlm_simple_sockets)
 add_subdirectory(cpp_playground)
 
 add_subdirectory(exercise2)
+add_subdirectory(exercise3)
+
 
 
 #add_subdirectory(SCVP.ExerciseXXX EXCLUDE_FROM_ALL)

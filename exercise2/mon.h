@@ -15,7 +15,7 @@ public:
     {
         std::cout << std::endl <<  "time\tA\tB\tF" << std::endl;
         SC_METHOD(monitor);
-        sensitive << A << B << Z;
+        sensitive << A << B << Z << Clk.pos();
         dont_initialize();
     }
 
