@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
 project(Cpp_playground)
-add_executable(cpp_playground testing.cpp)
+add_executable(cpp_playground 
+               testing.cpp 
+              )
 
 
 

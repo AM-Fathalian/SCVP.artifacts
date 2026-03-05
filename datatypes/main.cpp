@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2017 Matthias Jung
  *
  * Redistribution and use in source and binary forms, with or without
