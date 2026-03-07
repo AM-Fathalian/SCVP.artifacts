@@ -4,106 +4,204 @@
 #include <queue>
 
 using namespace std;
+ 
 
-// Interface Making!
-// %%%%%%%%%%%%%
-// Interface
-template <class T>  // making a type by template, so that we can use this interface for any type of data (int, float, string, etc.)
-class SimpleFIFOInterface : public sc_interface
-{
-    public:
-    virtual T read() = 0; // Pure virtual methods, making this a dynamic abstract of a method -
-                          // - For variable definition of inherited classes. 
-    virtual void write(T) = 0;
-};   
-// Channel
+// Let's make custom Signal.
 template <class T>
-class SimpleFIFO : public SimpleFIFOInterface<T>{ //putting <T>
-    private: // only the class SimpleFIFO itself can have access to the actual data.
-    queue<T> fifo; // Using STL queue to implement the FIFO buffer.
-
-    // We need them events to lock/unlock producer and consumer when FIFO is full/empty.s
-    sc_event writtenEvent;
-    sc_event readEvent;
-
-    uint64_t maxSize; // maxsize of queue.
+class SignalInterface : public sc_interface{
 
     public:
-    SimpleFIFO(uint64_t size=16) : maxSize(size) {
+    virtual T read() = 0;
+    virtual void write(T) = 0;
 
+};
+//as signal is a channel. here want to define primitive channel.
+// primitive channel allows us to put things on the sensitivity list of the process.
+template <class T>
+class mySignal : public SignalInterface<T>, public sc_prim_channel{
+
+    private:
+        T newValue;
+        T CurrentValue;
+        sc_event ValueChangedEvent;
+
+    public:
+    mySignal (){CurrentValue = 0; newValue = 0;}
+    
+    T read(){
+        return CurrentValue;
     }
-    T read() {
-        if(fifo.empty())
-            {
-                cout << "Wait for writing" << endl;
-                wait(writtenEvent); // Wait until the producer writes something to the FIFO. Once happned, it continues the code.
-            }
-        T val = fifo.front(); // Get the front element of the queue (the oldest element).
-        fifo.pop(); // Remove the front element from the queue.
-        readEvent.notify(SC_ZERO_TIME);
-        return val; // Return the value read from the FIFO.
+
+    void write(T d){
+        newValue = d;
+        if(CurrentValue!=newValue){
+            request_update(); // notify the change to kernel during the update phase. 
         }
-    void write(T data){
-        if(fifo.size() == maxSize){
-            cout << "waiting to be empty" << endl;
-            wait(readEvent); // Wait until the consumer reads something from the FIFO. Once happned)"
+    }
+
+    void update(){
+        if(CurrentValue != newValue){
+            CurrentValue = newValue;
+            ValueChangedEvent.notify(SC_ZERO_TIME); // notify the change to the processes.
+
         }
-        fifo.push(data); // Add the new data to the back of the queue.
-        writtenEvent.notify(SC_ZERO_TIME); // Notify the consumer that new data has been written;
+    }
+
+    const sc_event& default_event() const{
+        return ValueChangedEvent ;
     }
 };
 
+
 SC_MODULE(PRODUCER){
-    sc_port<SimpleFIFOInterface<int>> master; // Port to connect to the FIFO channel.
+    sc_port<SignalInterface<uint64_t>> master;
 
     SC_CTOR(PRODUCER){
         SC_THREAD(process);
     }
 
-    void process() {
-        int cnt = 0;
-
-        while(true){
-            wait(1,SC_NS);
-            cout << "P writes " << cnt << "@ : " << sc_time_stamp()<< endl;
-            master->write(cnt++);
-
-        }
+    void process(){
+        wait(7,SC_NS);
+        master->write(11);
+        wait(10,SC_NS);
+        master->write(22);
+        wait(20,SC_NS); // before sc_stop we should put a wait for at least a delta cycle.
+        sc_stop(); // Stop the simulation after writing 22.
     }
 };
 
-SC_MODULE(CONSUMER){
-    sc_port<SimpleFIFOInterface<int>> slave;
 
-    SC_CTOR(CONSUMER){
-        SC_THREAD(process);
+SC_MODULE(CONSUMER) {
+    sc_port<SignalInterface<uint64_t>> slave;
+
+    SC_CTOR(CONSUMER) {
+        SC_METHOD(process);
+        sensitive << slave;
+        dont_initialize(); // We don't want this process to run at the beginning of the simulation(@ time0).
     }
 
-    void process(){
-        while(true){
-            wait(4,SC_NS); // we wait 4 just to observe the way queue goes up.
-            cout << "C reads = " << slave->read() << "@ : " << sc_time_stamp() << endl;
-        }
+    void process(){ // we used while just because of the default_event() to check the sensitivity all the time.
+            cout << "Consumer read: " << slave->read() << " @ time: " << sc_time_stamp() << endl;
     }
+
 };
 
 
 int sc_main(int __attribute__((unused)) argc,
             char __attribute__((unused)) *argv[])
 {
-    SimpleFIFO<int> channel(4); // Running by only this line is erroneous. WE must define virtuals somewhere!
+    mySignal<uint64_t> channel; // Running by only this line is erroneous. WE must define virtuals somewhere!
     CONSUMER c1("consumer1");
     PRODUCER p1("producer1");
 
     p1.master.bind(channel); // Connect the producer's port to the FIFO channel.
     c1.slave.bind(channel); // Connect the consumer's port to the FIFO channel.
  
-    sc_start(17,SC_NS);
+    // sc_start(10,SC_NS);
+    sc_start(); // Now that we declared sc_stop() somewhere, there is no need for time limit.
     return 0;
 }
 
 
-// %%%%%%%%%%%%%%%%%%%%%%55%%%%%%%5
+// Interface Making!
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%55
+// Interface
+// template <class T>  // making a type by template, so that we can use this interface for any type of data (int, float, string, etc.)
+// class SimpleFIFOInterface : public sc_interface
+// {
+//     public:
+//     virtual T read() = 0; // Pure virtual methods, making this a dynamic abstract of a method -
+//                           // - For variable definition of inherited classes. 
+//     virtual void write(T) = 0;
+// };   
+// // Channel
+// template <class T>
+// class SimpleFIFO : public SimpleFIFOInterface<T>{ //putting <T>
+//     private: // only the class SimpleFIFO itself can have access to the actual data.
+//     queue<T> fifo; // Using STL queue to implement the FIFO buffer.
+
+//     // We need them events to lock/unlock producer and consumer when FIFO is full/empty.s
+//     sc_event writtenEvent;
+//     sc_event readEvent;
+
+//     uint64_t maxSize; // maxsize of queue.
+
+//     public:
+//     SimpleFIFO(uint64_t size=16) : maxSize(size) {
+
+//     }
+//     T read() {
+//         if(fifo.empty())
+//             {
+//                 cout << "Wait for writing" << endl;
+//                 wait(writtenEvent); // Wait until the producer writes something to the FIFO. Once happned, it continues the code.
+//             }
+//         T val = fifo.front(); // Get the front element of the queue (the oldest element).
+//         fifo.pop(); // Remove the front element from the queue.
+//         readEvent.notify(SC_ZERO_TIME);
+//         return val; // Return the value read from the FIFO.
+//         }
+//     void write(T data){
+//         if(fifo.size() == maxSize){
+//             cout << "waiting to be empty" << endl;
+//             wait(readEvent); // Wait until the consumer reads something from the FIFO. Once happned)"
+//         }
+//         fifo.push(data); // Add the new data to the back of the queue.
+//         writtenEvent.notify(SC_ZERO_TIME); // Notify the consumer that new data has been written;
+//     }
+// };
+
+// SC_MODULE(PRODUCER){
+//     sc_port<SimpleFIFOInterface<int>> master; // Port to connect to the FIFO channel.
+
+//     SC_CTOR(PRODUCER){
+//         SC_THREAD(process);
+//     }
+
+//     void process() {
+//         int cnt = 0;
+
+//         while(true){
+//             wait(1,SC_NS);
+//             cout << "P writes " << cnt << "@ : " << sc_time_stamp()<< endl;
+//             master->write(cnt++);
+
+//         }
+//     }
+// };
+
+// SC_MODULE(CONSUMER){
+//     sc_port<SimpleFIFOInterface<int>> slave;
+
+//     SC_CTOR(CONSUMER){
+//         SC_THREAD(process);
+//     }
+
+//     void process(){
+//         while(true){
+//             wait(4,SC_NS); // we wait 4 just to observe the way queue goes up.
+//             cout <<   C reads = " << slave->read() << "@ : " << sc_time_stamp() << endl;
+//         }
+//     }
+// };
+
+
+// int sc_main(int __attribute__((unused)) argc,
+//             char __attribute__((unused)) *argv[])
+// {
+//     SimpleFIFO<int> channel(4); // Running by only this line is erroneous. WE must define virtuals somewhere!
+//     CONSUMER c1("consumer1");
+//     PRODUCER p1("producer1");
+
+//     p1.master.bind(channel); // Connect the producer's port to the FIFO channel.
+//     c1.slave.bind(channel); // Connect the consumer's port to the FIFO channel.
+ 
+//     sc_start(17,SC_NS);
+//     return 0;
+// }
+
+
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 // class vehicle
 // {
 //     public:

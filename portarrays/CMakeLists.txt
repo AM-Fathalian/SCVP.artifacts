@@ -9,3 +9,9 @@ target_include_directories(portarrays
 target_link_libraries(portarrays
     PRIVATE ${SYSTEMC_LIBRARY}
 )
+
+find_library(SYSTEMC_LIBRARY 
+    NAMES systemc
+    PATHS $ENV{SYSTEMC_HOME}/lib-$ENV{SYSTEMC_TARGET_ARCH}/
+)
+
