@@ -4,12 +4,12 @@
 #include <systemc.h>
 
 // Place Interface:
-template <class T>
+// template <class T>
 class placeInterface : public sc_interface{
     public:
-    virtual void removeTokens(T) = 0;
-    virtual void addTokens(T) = 0;
-    virtual T testTokens() = 0;
+    virtual void removeTokens() = 0;
+    virtual void addTokens() = 0;
+    virtual bool testTokens() = 0;
     
 };
 
@@ -17,27 +17,31 @@ class placeInterface : public sc_interface{
 
 
 // Place Channel:
-template <class T>
-class place : public placeInterface<T>, public sc_prim_channel{
+// template <class T> 
+template<unsigned int Win = 1, unsigned int Wout = 1>
+class place : public placeInterface, public sc_prim_channel{
 
     private:
-        T tokens;
+        unsigned int tokens;
 
     public:
     place (){
         tokens = 0;        
     };
 
-    void removeTokens(T){
-        tokens -= T;
+    void removeTokens(){
+        tokens -= Wout;
     }
 
-    void addTokens(T){
-        tokens += T;
+    void addTokens(){
+        tokens += Win;
     }
 
-    T testTokens(){
-        return tokens;
+    bool testTokens(){
+        if (tokens >= Wout)
+            return true;
+        else
+            return false;
     }
 
 };

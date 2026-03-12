@@ -7,21 +7,36 @@
 using namespace std;
 
 // Transition:
+template<unsigned int N = 1, unsigned int M = 1>
 SC_MODULE (transition){
-    sc_port<placeInterface<unsigned int>> in, out;
-
+    sc_port<placeInterface, N, SC_ALL_BOUND> in;
+    sc_port<placeInterface, M, SC_ALL_BOUND> out;
+    bool flag_N = false;
     SC_CTOR(transition){
 
     }
 
     void fire(){
-        if (in->testTokens() != 0){
-            cout << this->name() << " : Fired" << endl;
-            in -> removeTokens(1);
-            out -> addTokens(1);
+        // 
+        for(int i=0; i < N; i++){
+                if (in[i]->testTokens() != 0)
+                    flag_N = true;
+                else{
+                    std::cout << name() << " : NOT Fired" << std::endl;
+                    flag_N = false;
+                    return;
+                }
+            }
+        
+        for (int i = 0; i < in.size(); i++){
+            in[i] -> removeTokens();
         }
-        else
-           cout << this->name() << ": NOT Fired" << endl;
+        for (int j = 0; j < out.size(); j++){
+            out[j] -> addTokens();
+        }
+        cout << this->name() << " : Fired" << endl;
+
+        // 
     }
 };
 #endif // TRANSITION_H
