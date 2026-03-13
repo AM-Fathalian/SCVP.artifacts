@@ -4,52 +4,106 @@
 #include "transition.h"
 #include "subnet.h"
 
-// Toplevel:
-SC_MODULE(toplevel){
 
-    transition<1, 2> t1;
-    transition<2, 1> t2; 
-    transition<1, 1> t3;
-    place<1, 1> p1, p2, p3, p4; 
+// SC_MODULE(toplevel){
+//     place<1, 1> IDLE;
+//     place<3, 3> ACTIVE;
+//     transition<1, 1, 1> RD;
+//     transition<1, 1> PRE;
+//     transition<1, 1> WR;
+//     transition<1, 1> ACT;
+//     // place<1,1> BUSY;
     
-    SC_CTOR(toplevel) : t1("t1"), t2("t2"), t3("t3"){
-        t1.in.bind(p1);
-        t1.out.bind(p3);
-        t1.out.bind(p2);
-        t2.in.bind(p2);
-        t2.in.bind(p4);
-        t2.out.bind(p1);
-        t3.in.bind(p3);
-        t3.out.bind(p4);
-
-        // Initialize with tokens
-        p1.addTokens();  // Start with 1 token in p1
-
-        SC_THREAD(process);
-    }
+//     SC_CTOR(toplevel) : RD("RD"), PRE("PRE"), WR("WR"), ACT("ACT"){
+//         ACT.in.bind(IDLE);
+//         ACT.out.bind(ACTIVE);
+//         RD.in.bind(ACTIVE);
+//         RD.out.bind(ACTIVE);
+//         // RD.inhibitors.bind(BUSY);
+        
+//         PRE.in.bind(ACTIVE);
+//         PRE.out.bind(IDLE);
+//         WR.in.bind(ACTIVE);
+//         WR.out.bind(ACTIVE);
 
 
-    void process(){
-        while (true){
-            wait(10,SC_NS);
-            t1.fire();
-            wait(10,SC_NS);
-            t2.fire();
-            wait(10, SC_NS);
-            t3.fire();
-            wait(10,SC_NS);
-            t2.fire();
-            sc_stop();
+//         // Initialize with tokens
+//         // p1.addTokens();  // Start with 1 token in p1
+//         IDLE.addTokens();
+//         SC_THREAD(process);
+//     }
+//     void process(){
+//         while (true){
+//             wait(10,SC_NS);
+//             ACT.fire();
+//             wait(10,SC_NS);
+//             ACT.fire();
+//             wait(10, SC_NS);
+//             RD.fire();
+//             wait(10,SC_NS);
+//             WR.fire();
+//             wait(10,SC_NS);
+//             PRE.fire();
+//             wait(10,SC_NS);
+//             ACT.fire();
+//             // wait(SC_ZERO_TIME);
+//             sc_stop();
+//         }
+//     }
+
+// };
+
+// TopLevel:
+    SC_MODULE(toplevel){
+        place<2, 2> IDLE;
+        subnet s1, s2;
+
+        SC_CTOR(toplevel): s1("s1"), s2("s2") {
+            s1.in.bind(IDLE);
+            s1.out.bind(IDLE);
+            s2.in.bind(IDLE);
+            s2.out.bind(IDLE);
+
+            IDLE.addTokens();
+
+            SC_THREAD(process);
         }
-    }
 
-};
+        void process(){
+            while (true){
+                wait(10, SC_NS);
+                s1.ACT.fire();
+                wait(10, SC_NS);
+                s1.ACT.fire();
+                wait(10, SC_NS);
+                s1.RD.fire();
+                wait(10, SC_NS);
+                s1.WR.fire();
+                wait(10, SC_NS);
+                s1.PRE.fire();
+                wait(10, SC_NS);
+                s1.ACT.fire();
+                wait(10, SC_NS);
+                s2.ACT.fire();
+                wait(10, SC_NS);
+                s2.ACT.fire();
+                wait(10, SC_NS);
+                s1.PRE.fire();
+                wait(10, SC_NS);
+                s2.PRE.fire();
+                wait(10, SC_NS);
+                sc_stop();
+            }
+        }
+    };
+
+
 
 
 int sc_main(int, char**)
 {
     // TODO
-    toplevel t("top1");
+    toplevel t("t");
 
     sc_start();
     return 0;
